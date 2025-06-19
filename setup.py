@@ -1,0 +1,30 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="finagent-pro",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[
+        "streamlit>=1.32.0",
+        "langchain>=0.1.0",
+        "langchain-openai>=0.0.5",
+        "langgraph>=0.0.15",
+        "langchain-community>=0.0.10",
+        "openai>=1.6.0",
+        "yfinance>=0.2.35",
+        "pandas>=2.2.0",
+        "numpy>=1.26.0",
+        "python-dotenv>=1.0.0",
+        "redis>=5.0.1",
+        "pydantic>=2.6.1",
+        "requests>=2.31.0",
+        "beautifulsoup4>=4.12.0",
+        "plotly>=5.18.0",
+        "matplotlib>=3.8.0",
+        "PyPDF2>=3.0.1",
+        "langchain-text-splitters>=0.1.0",
+        "faiss-cpu>=1.11.0",
+        "langchain-tavily>=0.2.3"
+    ],
+    python_requires=">=3.9",
+)

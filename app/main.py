@@ -9,8 +9,6 @@ logger = setup_logger(__name__)
 
 # Load environment variables
 
-logger.info("Environment variables loaded")
-
 # Configure page
 st.set_page_config(
     page_title="FinAgent Pro",
@@ -103,7 +101,7 @@ with chat_container:
                         st.markdown(
                             f"""
                             <div style='padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem;'>
-                                <b>🤖 FinAgent:</b> {content['content'].replace('$', '\$')}
+                                <b>🤖 FinAgent:</b> {content['content'].replace('$', r'\$')}
                             </div>
                             """, 
                             unsafe_allow_html=True

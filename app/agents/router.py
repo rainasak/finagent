@@ -27,14 +27,14 @@ class ToolRouter:
 
     def route(self, subgoal: str) -> tuple[BaseTool, str, str]:
         """Select the most appropriate tool for a given subgoal."""
-        log_function_call(self.logger, "route", subgoal=subgoal)
+        # log_function_call(self.logger, "route", subgoal=subgoal)
         try:
             tool_names = list(self.tools.keys())
-            self.logger.debug(f"Available tools: {tool_names}")
+            # self.logger.debug(f"Available tools: {tool_names}")
             
             response = self.chain.invoke({"subgoal": subgoal, "tools": tool_names})
 
-            self.logger.debug(f"Tool route response: {response}")
+            # self.logger.debug(f"Tool route response: {response}")
 
             if not response:
                 self.logger.warning("No response received from tool routing chain, defaulting to web_search")
@@ -56,7 +56,7 @@ class ToolRouter:
                 query = subgoal
                 is_url = False
             
-            log_function_result(self.logger, "route", f"Selected tool: {selected_tool_name}, query: {query}")
+            # log_function_result(self.logger, "route", f"Selected tool: {selected_tool_name}, query: {query}")
             selected_tool = self.tools.get(selected_tool_name)
             return selected_tool, query, is_url
         except Exception as e:
@@ -65,27 +65,27 @@ class ToolRouter:
 
     def execute_tool(self, tool: BaseTool, subgoal: str, query: str, is_url: bool) -> Any:
         """Execute the selected tool with the subgoal."""
-        log_function_call(self.logger, "execute_tool", tool=tool.name, subgoal=subgoal)
+        # log_function_call(self.logger, "execute_tool", tool=tool.name, subgoal=subgoal)
         try:
             result = None
             if tool.name == "calculator":
                 # Parse financial calculation parameters from subgoal
-                self.logger.debug("Parsing calculation parameters")
+                # self.logger.debug("Parsing calculation parameters")
                 result = tool.run(query)
             elif tool.name == "code_executor":
                 # Generate appropriate code for the subgoal
-                self.logger.debug("Generating analysis code")
+                # self.logger.debug("Generating analysis code")
                 result = tool.run(query)
             elif tool.name == "document_summarizer":
                 # Prepare document input
-                self.logger.debug("Preparing document input")
+                # self.logger.debug("Preparing document input")
                 result = tool._run(query, is_url)
             else:
                 # Default execution for other tools
-                self.logger.debug(f"Executing {tool.name} with default handling")
+                # self.logger.debug(f"Executing {tool.name} with default handling")
                 result = tool.run(query)
             
-            log_function_result(self.logger, "execute_tool", result)
+            # log_function_result(self.logger, "execute_tool", result)
             return result
         except Exception as e:
             log_error(self.logger, e, f"executing {tool.name}")

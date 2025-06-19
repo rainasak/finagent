@@ -152,7 +152,6 @@ class FinancialAgent:
             evaluator.evaluate("tool_use", query=current_subgoal['description'], tool=tool.name, output=result.get('result'))
 
             evaluator.evaluate('task_success', query=current_subgoal['description'], output=result.get('result'))
-
             
             # Update state
             current_subgoal['completed'] = True
@@ -200,7 +199,7 @@ class FinancialAgent:
     def next_subgoal(self, state: AgentState) -> AgentState:
         """Move to the next subgoal in the list."""
         state.current_subgoal_index += 1
-        self.logger.debug(f"Moving to next subgoal: {state.current_subgoal_index}/{len(state.subgoals)}")
+        self.logger.info(f"Moving to next subgoal: {state.current_subgoal_index}/{len(state.subgoals)}")
         return state
     
     def synthesize_response(self, state: AgentState) -> AgentState:
@@ -240,7 +239,6 @@ class FinancialAgent:
             text_results = []
             
             for result in useful_results:
-                logger.debug(result)
                 if isinstance(result, dict):
                     if result.get('type') == 'plot' and 'display' in result:
                         visualizations.append(result['display'])
@@ -289,7 +287,7 @@ class FinancialAgent:
 
     def _create_workflow(self) -> CompiledStateGraph:
         """Create the agent workflow using langgraph."""
-        self.logger.debug("Creating workflow")
+        self.logger.info("Creating workflow")
         workflow = StateGraph(AgentState)
 
         # Add nodes using class methods as handlers
@@ -326,7 +324,6 @@ class FinancialAgent:
 
     def _initialize_tools(self) -> Dict[str, BaseTool]:
         """Initialize all available tools."""
-        self.logger.debug("Initializing tools")
         tools = {
             "web_search": WebSearchTool(),
             "calculator": CalculatorTool(),
@@ -338,7 +335,7 @@ class FinancialAgent:
 
     def process_query(self, query: str) -> str:
         """Process a user query through the agent workflow."""
-        log_function_call(self.logger, "process_query", query=query)
+        # log_function_call(self.logger, "process_query", query=query)
         try:
             # Input validation
             if not query or not isinstance(query, str):
@@ -417,14 +414,14 @@ class FinancialAgent:
                 # If response is a string, wrap it in a dict with display field
                 if isinstance(response, str):
                     response = {
-                        'content': response,
+                        'content': response.replace('$', '\$'),
                         'display': None
                     }
                 
                 # Add response to memory
                 self.memory.add_to_memory("assistant", response['content'])
                 
-                log_function_result(self.logger, "process_query", response)
+                # log_function_result(self.logger, "process_query", response)
                 return response
                 
             except Exception as e:

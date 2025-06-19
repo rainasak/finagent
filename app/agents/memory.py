@@ -59,7 +59,7 @@ class MemoryManager:
                 metadatas=metadatas
             )
             self.message_count = len(messages)
-            self.logger.debug(f"Initialized vector store with {self.message_count} messages")
+            # self.logger.debug(f"Initialized vector store with {self.message_count} messages")
             
         except Exception as e:
             self.logger.error(f"Error initializing vector store: {str(e)}")
@@ -80,7 +80,7 @@ class MemoryManager:
                 metadatas=[metadata]
             )
             self.message_count += 1
-            self.logger.debug("Added new message to vector store")
+            # self.logger.debug("Added new message to vector store")
             
         except Exception as e:
             self.logger.error(f"Error updating vector store: {str(e)}")
@@ -131,7 +131,7 @@ class MemoryManager:
         # Update vector store for semantic search
         self._update_vector_store(role, content)
         
-        self.logger.debug(f"Added {role} message to memory and updated indexes")
+        # self.logger.debug(f"Added {role} message to memory and updated indexes")
 
     def get_chat_history(self) -> List[Dict[str, str]]:
         """Retrieve the complete chat history."""
@@ -172,7 +172,7 @@ class MemoryManager:
                     if message not in relevant_messages:
                         relevant_messages.append(message)
             
-            self.logger.debug(f"Found {len(relevant_messages)} relevant messages for context")
+            # self.logger.debug(f"Found {len(relevant_messages)} relevant messages for context")
             return relevant_messages
             
         except Exception as e:

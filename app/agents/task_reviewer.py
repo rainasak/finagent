@@ -24,15 +24,15 @@ class TaskReviewer:
         self.llm = ChatOpenAI(model="gpt-4o", temperature=0, rate_limiter=rate_limiter)
         self.llm = self.llm.with_structured_output(TaskReviewerSchema, method='json_schema', strict=True)
         self.chain = TASK_REVIEW_PROMPT | self.llm
-        self.logger.debug("TaskReviewer chain initialized")
+        self.logger.info("TaskReviewer chain initialized")
 
     def review(self, state: AgentState) -> bool:
         """Review the result of a subgoal and determine if it meets the requirements."""
-        log_function_call(self.logger, "review", subgoal=state.subgoals[state.current_subgoal_index])
+        # log_function_call(self.logger, "review", subgoal=state.subgoals[state.current_subgoal_index])
         subgoal = state.subgoals[state.current_subgoal_index]
         try:
             if not subgoal.get('skipped', False):
-                self.logger.debug(f"Reviewing subgoal: {subgoal}")
+                self.logger.info(f"Reviewing subgoal: {subgoal['description']}")
 
                 curr_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -47,9 +47,9 @@ class TaskReviewer:
                     "query": subgoal.get('query', '')
                 }).model_dump()
 
-                self.logger.debug(f"Chain response: {response}")
+                # self.logger.debug(f"Chain response: {response}")
 
-                self.logger.debug(f"Review result: {response}")
+                # self.logger.debug(f"Review result: {response}")
                 # Update subgoal based on review
                 subgoal['completed'] = response.get('completed', True)
                 subgoal['feedback'] = response.get('feedback', '')
@@ -66,7 +66,7 @@ class TaskReviewer:
     def should_retry(self, state: AgentState) -> str:
         """Determine if a subgoal should be retried based on the review."""
         subgoal = state.subgoals[state.current_subgoal_index]
-        log_function_call(self.logger, "should_retry", subgoal=subgoal)
+        # log_function_call(self.logger, "should_retry", subgoal=subgoal)
         try:
             # If the subgoal was skipped due to dependencies, continue to next
             if subgoal.get('skipped', False):
@@ -74,7 +74,14 @@ class TaskReviewer:
                 return "continue"
             
             # If not completed but has an error indicating permanent failure
-            if not subgoal.get('completed', False):               
+            if not subgoal.get('completed', False):
+                self.logger.info(f"Task failed due to: {subgoal.get('feedback')}") 
+
+                # Check if error was due to URL/document not having correct information to solve task
+                if subgoal.get('is_url', False) and 'error' not in subgoal.get('feedback'):
+                    self.logger.info(f"The information found was not relevant to the task. No need to retry task.")
+                    return "continue"
+
                 # Check retry count
                 retries = subgoal.get('retries', 0)
                 if retries < self.max_retries:

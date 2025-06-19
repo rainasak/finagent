@@ -26,7 +26,7 @@ class TaskPlanner:
 
     def plan(self, query: str, context: str) -> tuple[list[dict[str, Any], str]]:
         """Break down a complex query into structured subgoals."""
-        log_function_call(self.logger, "plan", query=query, context=context)
+        # log_function_call(self.logger, "plan", query=query, context=context)
         try:
             curr_date = datetime.now().strftime("%Y-%m-%d")
             response = self.chain.invoke({"date": curr_date, "query": query, "context": context}).model_dump()
@@ -37,6 +37,8 @@ class TaskPlanner:
             if subgoals is None or (isinstance(subgoals, str) and subgoals.strip() in ["", "null"]):
                 error_msg = "I couldn't break down your query into actionable steps. Could you please rephrase it?"
                 return error_msg
+
+            self.logger.info(f"Task planning explanation: {response.get('explanation')}")
 
             for subgoal in subgoals:
                 subgoal["retries"] = 0

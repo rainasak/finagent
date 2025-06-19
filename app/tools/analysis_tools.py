@@ -60,10 +60,12 @@ class WebSearchTool(BaseTool):
 
     def _run(self, query: str) -> str:
         """Execute the web search with the given query."""
-        log_function_call(self.logger, "_run", query=query)
+        # log_function_call(self.logger, "_run", query=query)
         try:
             # Add date context to the query for recent results
             curr_date = datetime.now().strftime("%Y-%m-%d")
+
+            self.logger.info(f"Searching the web using query: {query}")
             
             # First perform the search
             search_results = self.search_tool.invoke(query)
@@ -75,7 +77,7 @@ class WebSearchTool(BaseTool):
                 
                 for url in urls_to_crawl:
                     try:
-                        self.logger.debug(f"Crawling URL: {url}")
+                        self.logger.info(f"Crawling URL: {url}")
                         crawl_result = self.crawl_tool.invoke(url)
                         if crawl_result:
                             detailed_results.append(crawl_result)
@@ -90,7 +92,8 @@ class WebSearchTool(BaseTool):
 
             formatted_results = (WEB_SEARCH_PROMPT | self.llm).invoke({"query": query, "results": formatted_results, "today": curr_date})
             
-            log_function_result(self.logger, "_run", formatted_results.content)
+            # log_function_result(self.logger, "_run", formatted_results.content)
+            self.logger.debug(f"Result of Web Search and Summarization:\n\n{formatted_results.content}")
             return {
                 "type": "text",
                 "query": query,
@@ -122,13 +125,13 @@ class CodeExecutorTool(BaseTool):
 
     def _run(self, code: str) -> Dict[str, Any]:
         """Execute Python code and return results."""
-        log_function_call(self.logger, "_run", code=code)
+        # log_function_call(self.logger, "_run", code=code)
         
         try:
             # Execute the code
-            self.logger.debug("Executing code in REPL")
+            self.logger.info("Sanitizing code and executing in REPL")
             sanitized_code = (CODE_SANITIZER_PROMPT | self.llm).invoke({"code": code}).model_dump()
-            self.logger.debug(f"Sanitized code: {sanitized_code}")
+            # self.logger.debug(f"Sanitized code: {sanitized_code}")
             result = self.python_repl.run(sanitized_code['code'])
             
             # Check if the result contains a plot
@@ -149,7 +152,8 @@ class CodeExecutorTool(BaseTool):
                     "result": result,
                     "display": img_markdown
                 }
-                log_function_result(self.logger, "_run", "Generated matplotlib plot")
+                # log_function_result(self.logger, "_run", "Generated matplotlib plot")
+                self.logger.info("Generated visualization using matplotlib")
                 
             elif "go.Figure" in sanitized_code['code']:
                 self.logger.debug("Detected plotly figure in code")
@@ -172,7 +176,9 @@ class CodeExecutorTool(BaseTool):
                         "result": result,
                         "display": img_markdown
                     }
-                    log_function_result(self.logger, "_run", "Generated plotly plot")
+                    # log_function_result(self.logger, "_run", "Generated plotly plot")
+                self.logger.info("Generated visualization using plotly")
+
             else:
                 response = {
                     "type": "text",
@@ -181,7 +187,7 @@ class CodeExecutorTool(BaseTool):
                 }
 
             response["query"] = sanitized_code['code']
-            log_function_result(self.logger, "_run", response)
+            # log_function_result(self.logger, "_run", response)
             return response
             
         except Exception as e:
@@ -206,14 +212,15 @@ class CalculatorTool(BaseTool):
 
     def _run(self, query: str) -> Dict[str, float]:
         """Convert the user query that may be in natural language into a valid mathematical operation in Python, and use Python's eval to compute the result."""
-        log_function_call(self.logger, "_run", query=query)
+        # log_function_call(self.logger, "_run", query=query)
         try:
             # Convert the query into a valid Python expression
-            self.logger.debug("Converting natural language to Python expression")
-            self.logger.debug(f"Generated Python code: {query}")
+            # self.logger.debug("Converting natural language to Python expression")
+            # self.logger.debug(f"Generated Python code: {query}")
             
             # Execute the Python code using the CodeExecutorTool
-            self.logger.debug("Executing generated code")
+            # self.logger.debug("Executing generated code")
+            self.logger.info("Performing calculation using calculator.")
             result = self.repl.run(query)
             
             response = {
@@ -221,7 +228,7 @@ class CalculatorTool(BaseTool):
                 "result": result,
                 "query": query
             }
-            log_function_result(self.logger, "_run", response)
+            # log_function_result(self.logger, "_run", response)
             return response
         except Exception as e:
             log_error(self.logger, e, "calculation")
@@ -249,45 +256,41 @@ class DocumentSummarizerTool(BaseTool):
         """Extract text from different document types."""
         content_type = response.headers.get('content-type', '')
         mime_type = content_type.split(';')[0]
-        log_function_call(self.logger, "_extract_text_from_response", mime_type=mime_type)
+        # log_function_call(self.logger, "_extract_text_from_response", mime_type=mime_type)
+        self.logger.info("Extracting information")
 
         if mime_type == 'application/pdf':
-            self.logger.debug("Processing PDF document")
+            self.logger.info("Processing PDF document")
             # Handle PDF files
             pdf_file = io.BytesIO(response.content)
             pdf_reader = PdfReader(pdf_file)
             text = ' '.join(page.extract_text() for page in pdf_reader.pages)
-            self.logger.debug(f"Extracted {len(pdf_reader.pages)} pages from PDF")
+            # self.logger.debug(f"Extracted {len(pdf_reader.pages)} pages from PDF")
         elif mime_type == 'text/html':
-            self.logger.debug("Processing HTML document")
+            self.logger.info("Processing HTML document")
             # Handle HTML content
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.get_text(separator=' ', strip=True)
         else:
-            self.logger.debug("Processing plain text document")
             # Handle plain text
             text = response.text
 
-        log_function_result(self.logger, "_extract_text_from_response", f"Extracted {len(text)} characters")
+        # log_function_result(self.logger, "_extract_text_from_response", f"Extracted {len(text)} characters")
         return text
 
     def _run(self, query: str, is_url: bool) -> Dict[str, Any]:
         """Summarize financial document or article."""
-        log_function_call(self.logger, "_run", query=query)
+        # log_function_call(self.logger, "_run", query=query)
         
         # First, try to find a relevant document via web search
         try:
-            self.logger.debug(f"Found relevant document URL: {query}")
-
-            self.logger.debug(f"Extracted URL: {query}")
-
             if not query:
                 self.logger.warning("No relevant document found")
                 return {"error": "No relevant document found."}
             
             if is_url:
                 # Fetch document content from the URL
-                self.logger.debug(f"Fetching content from URL: {query}")
+                self.logger.info(f"Fetching content from URL: {query}")
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
@@ -300,7 +303,7 @@ class DocumentSummarizerTool(BaseTool):
                 text = query
             
             # Summarize the extracted text
-            self.logger.debug("Generating summary of extracted text")
+            # self.logger.debug("Generating summary of extracted text")
             summary = self.chain.invoke({"content": text}).content
             
             result = {
@@ -308,7 +311,8 @@ class DocumentSummarizerTool(BaseTool):
                 "query": query,
                 "result": summary,
             }
-            log_function_result(self.logger, "_run", result)
+            # log_function_result(self.logger, "_run", result)
+            self.logger.debug(f"Summarized content:\n\n{summary}")
             return result
             
         except Exception as e:

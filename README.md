@@ -1,0 +1,2 @@
+# finagent
+Autonomous Financial Agent
